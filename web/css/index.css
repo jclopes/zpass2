@@ -1,0 +1,29 @@
+body {
+  background-color: #f4f4f4;
+  font-family: sans-serif;
+}
+
+.app {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  height: 200px;
+  width: 220px;
+  padding:10px;
+  margin:-110px 0px 0px -120px;
+}
+
+fieldset {
+  border-style: none;
+}
+
+input {
+  display: block;
+  margin-bottom: 10px;
+  padding: 5px;
+}
+
+output {
+  font-family: monospace;
+  font-size: x-large;
+}

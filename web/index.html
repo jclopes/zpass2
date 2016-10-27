@@ -2,22 +2,7 @@
   <head>
     <meta charset="UTF-8"/>
     <title>ZPass2</title>
-    <style media="screen" type="text/css">
-    fieldset {
-      border-style: solid;
-      border-left-style: none;
-      border-right-style: none;
-    }
-    input {
-      display: block;
-      margin-bottom: 10px;
-      padding: 5px;
-    }
-    output {
-      font-family: monospace;
-      font-size: x-large;
-    }
-    </style>
+    <link rel="stylesheet" type="text/css" href="css/index.css">
     <script type="text/javascript" src="libs/unorm.js"></script>
     <script type="text/javascript" src="libs/buffer.js"></script>
     <script type="text/javascript" src="libs/scrypt.js"></script>
@@ -42,19 +27,20 @@
     </script>
   </head>
   <body>
-    <form name="form1" action="javascript:dohash();">
-      <fieldset>
-        <legend>ZPass2</legend>
-        <label for="password">Your Password</label>
-        <input id="password" type="password" />
-        <label for="domain">Site Domain</label>
-        <input id="domain" type="text" placeholder="site.net" />
-        <p><output id="result">&nbsp;</output></p>
-        <input id="genPassButton" type="submit" value="Generate Password" />
-      </fieldset>
-    </form>
+    <div class="app">
+      <form name="zpass2" action="javascript:dohash();">
+        <fieldset>
+          <label for="password">Your Password</label>
+          <input id="password" type="password" />
+          <label for="domain">Site Domain</label>
+          <input id="domain" type="text" placeholder="site.net or app name" />
+          <p><output id="result">&nbsp;</output></p>
+          <input id="genPassButton" type="submit" value="Generate Password" />
+        </fieldset>
+      </form>
+    </div>
     <script type="text/javascript" language="JavaScript">
-      document.forms['form1'].elements['password'].focus();
+      document.forms['zpass2'].elements['password'].focus();
     </script>
   </body>
 </html>
