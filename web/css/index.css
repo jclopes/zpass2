@@ -3,14 +3,25 @@ body {
   font-family: sans-serif;
 }
 
+.description {
+  float: left;
+  width: 450px;
+  font-family: monospace;
+}
+
 .app {
-  position: absolute;
+  float: left;
   left: 50%;
   top: 50%;
   height: 200px;
   width: 220px;
-  padding:10px;
-  margin:-110px 0px 0px -120px;
+  padding: 10px;
+  margin: 50px 50px 50px 50px;
+}
+
+.footer {
+  clear: both;
+  padding: 10px;
 }
 
 fieldset {

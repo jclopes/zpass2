@@ -2,7 +2,7 @@
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta charset="UTF-8"/>
-    <title>ZPass2</title>
+    <title>zPass2</title>
     <link rel="stylesheet" type="text/css" href="css/index.css">
     <script type="text/javascript" src="libs/unorm.js"></script>
     <script type="text/javascript" src="libs/buffer.js"></script>
@@ -28,17 +28,45 @@
     </script>
   </head>
   <body>
+    <div class="header">
+      <img src="img/logo.png" />
+    </div>
     <div class="app">
       <form name="zpass2" action="javascript:dohash();">
         <fieldset>
-          <label for="password">Your Password</label>
+          <label for="password">Keyword</label>
           <input id="password" type="password" />
-          <label for="domain">Site Domain</label>
+          <label for="domain">URI</label>
           <input id="domain" type="text" placeholder="site.net or app name" />
           <p><output id="result">&nbsp;</output></p>
           <input id="genPassButton" type="submit" value="Generate Password" />
         </fieldset>
       </form>
+    </div>
+    <div class="description">
+      <p>
+zPass2 is a password app that helps you generate unique passwords for different websites and applications login.
+      </p>
+      <p>
+It works locally in your iPhone and iPad and no one knows about it. It never saves any information.
+      </p>
+      <p>
+All your passwords will be generated on the moment using one secret Keyword that you define.
+      </p>
+      <p>
+Every time you need to login somewhere you use zPass2 to retrieve your password by
+typing your Keyword and a website or app name.
+      </p>
+      <p>
+The generated passwords are strong passwords that you never need to remember. Just generate them every time you need to use them.
+      </p>
+      <p>
+Since there is no saved information anywhere you can use multiple devices to generate your passwords without any setup needed.
+      </p>
+    </div>
+    <div class="footer">
+      <p>Developed by <a href="https://github.com/jclopes/">João Lopes</a></p>
+      </p>
     </div>
     <script type="text/javascript" language="JavaScript">
       document.forms['zpass2'].elements['password'].focus();
