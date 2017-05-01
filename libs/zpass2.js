@@ -2,8 +2,7 @@
 // The derived password string will be passed to the callback function as the
 // only argument.
 function zpass2(secret, uri, callback) {
-    var password = secret+'@'+uri;
-    password = new buffer.Buffer(password.normalize('NFKD'), 'utf8');
+    var res = secret+'@'+uri;
     var salt = new buffer.Buffer("6dYX3t1X402Q3b72T1eYa1D2520".normalize('NFKD'), 'utf8');
 
     // scrypt configuration
@@ -12,21 +11,21 @@ function zpass2(secret, uri, callback) {
     var p = 1;
     var dkLen = 32;
 
-    scrypt(password, salt, N, r, p, dkLen, function(error, progress, key) {
-        if (key) {
-            key = new buffer.SlowBuffer(key);
-            postProcess(key, callback);
-        }
-    });
+    do {
+        var password = new buffer.Buffer(res.normalize('NFKD'), 'utf8');
+        var key = scrypt(password, salt, N, r, p, dkLen);
+        key = new buffer.SlowBuffer(key);
+        res = postProcess(key);
+    } while(!checkComplexity(res));
+    callback(res)
 }
 
 // Ensures that the derived password complies to the requirements of diversity
 // and length.
-function postProcess(key, callback) {
+function postProcess(key) {
     key = bytesToBase62(key);
-    key = key.slice(0,32);
-    key = ensureComplexity(key);
-    callback(key);
+    key = key.slice(0,16);
+    return key;
 }
 
 // Naive Base62 one way encoding.
@@ -50,14 +49,10 @@ function b62encode(byteVal) {
     return str;
 }
 
-// Make sure the string contains a digit, a lower case letter and a upper case letter
-// To achive this the first 3 chars of the text will be converted.
-function ensureComplexity(text) {
-    var digits = '0123456789';
-    var loAlpha = 'abcdefghijklmnopqrstuvwxyz';
-    var upAlpha = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    var c0 = text.charCodeAt(0) % 10;
-    var c1 = text.charCodeAt(1) % 26;
-    var c2 = text.charCodeAt(2) % 26;
-    return digits.charAt(c0) + loAlpha.charAt(c1) + upAlpha.charAt(c2) + text.slice(3);
+function checkComplexity(text) {
+    var hasNumber = /\d/;
+    var hasUpper = /[A-Z]/;
+    var hasLower = /[a-z]/;
+    var res = (hasNumber.test(text) && hasUpper.test(text) && hasLower.test(text));
+    return res;
 }

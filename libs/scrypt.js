@@ -285,9 +285,7 @@ THE SOFTWARE.
 
     // N = Cpu cost, r = Memory cost, p = parallelization cost
     // callback(error, progress, key)
-    function scrypt(password, salt, N, r, p, dkLen, callback) {
-
-        if (!callback) { throw new Error('missing callback'); }
+    function scrypt(password, salt, N, r, p, dkLen) {
 
         N = ensureInteger(N, 'N');
         r = ensureInteger(r, 'r');
@@ -328,130 +326,45 @@ THE SOFTWARE.
         var _X = new Uint32Array(16);      // blockmix_salsa8
 
         var totalOps = p * N * 2;
-        var currentOp = 0;
         var lastPercent10 = null;
 
-        // Set this to true to abandon the scrypt on the next step
-        var stop = false;
-
         // State information
-        var state = 0;
-        var i0 = 0, i1;
         var Bi;
 
-        // How many blockmix_salsa8 can we do per step?
-        var limit = parseInt(1000 / r);
+        for (var i0 = 0; i0 < p; i0++) {
+            Bi = i0 * 32 * r;
 
-        // Trick from scrypt-async; if there is a setImmediate shim in place, use it
-        var nextTick = (typeof(setImmediate) !== 'undefined') ? setImmediate : setTimeout;
+            arraycopy(B, Bi, XY, 0, Yi);                       // ROMix - 1
 
-        // This is really all I changed; making scryptsy a state machine so we occasionally
-        // stop and give other evnts on the evnt loop a chance to run. ~RicMoo
-        var incrementalSMix = function() {
-            if (stop) {
-                return callback(new Error('cancelled'), currentOp / totalOps);
+            // Run up to 1000 steps of the first inner smix loop
+            for (var i = 0; i < N; i++) {                  // ROMix - 2
+                arraycopy(XY, 0, V, i * Yi, Yi)         // ROMix - 3
+                blockmix_salsa8(XY, Yi, r, x, _X);             // ROMix - 4
             }
 
-            switch (state) {
-                case 0:
-                    // for (var i = 0; i < p; i++)...
-                    Bi = i0 * 32 * r;
-
-                    arraycopy(B, Bi, XY, 0, Yi);                       // ROMix - 1
-
-                    state = 1;                                         // Move to ROMix 2
-                    i1 = 0;
-
-                    // Fall through
-
-                case 1:
-
-                    // Run up to 1000 steps of the first inner smix loop
-                    var steps = N - i1;
-                    if (steps > limit) { steps = limit; }
-                    for (var i = 0; i < steps; i++) {                  // ROMix - 2
-                        arraycopy(XY, 0, V, (i1 + i) * Yi, Yi)         // ROMix - 3
-                        blockmix_salsa8(XY, Yi, r, x, _X);             // ROMix - 4
-                    }
-
-                    // for (var i = 0; i < N; i++)
-                    i1 += steps;
-                    currentOp += steps;
-
-                    // Call the callback with the progress (optionally stopping us)
-                    var percent10 = parseInt(1000 * currentOp / totalOps);
-                    if (percent10 !== lastPercent10) {
-                        stop = callback(null, currentOp / totalOps);
-                        if (stop) { break; }
-                        lastPercent10 = percent10;
-                    }
-
-                    if (i1 < N) {
-                        break;
-                    }
-
-                    i1 = 0;                                          // Move to ROMix 6
-                    state = 2;
-
-                    // Fall through
-
-                case 2:
-
-                    // Run up to 1000 steps of the second inner smix loop
-                    var steps = N - i1;
-                    if (steps > limit) { steps = limit; }
-                    for (var i = 0; i < steps; i++) {                // ROMix - 6
-                        var offset = (2 * r - 1) * 16;               // ROMix - 7
-                        var j = XY[offset] & (N - 1);
-                        blockxor(V, j * Yi, XY, Yi);                 // ROMix - 8 (inner)
-                        blockmix_salsa8(XY, Yi, r, x, _X);           // ROMix - 9 (outer)
-                    }
-
-                    // for (var i = 0; i < N; i++)...
-                    i1 += steps;
-                    currentOp += steps;
-
-                    // Call the callback with the progress (optionally stopping us)
-                    var percent10 = parseInt(1000 * currentOp / totalOps);
-                    if (percent10 !== lastPercent10) {
-                        stop = callback(null, currentOp / totalOps);
-                        if (stop) { break; }
-                        lastPercent10 = percent10;
-                    }
-
-                    if (i1 < N) {
-                        break;
-                    }
-
-                    arraycopy(XY, 0, B, Bi, Yi);                     // ROMix - 10
-
-                    // for (var i = 0; i < p; i++)...
-                    i0++;
-                    if (i0 < p) {
-                        state = 0;
-                        break;
-                    }
-
-                    b = [];
-                    for (var i = 0; i < B.length; i++) {
-                        b.push((B[i] >>  0) & 0xff);
-                        b.push((B[i] >>  8) & 0xff);
-                        b.push((B[i] >> 16) & 0xff);
-                        b.push((B[i] >> 24) & 0xff);
-                    }
-
-                    var derivedKey = PBKDF2_HMAC_SHA256_OneIter(password, b, dkLen);
-
-                    // Done; don't break (which would reschedule)
-                    return callback(null, 1.0, derivedKey);
-                }
-
-                // Schedule the next steps
-                nextTick(incrementalSMix);
+            // Run up to 1000 steps of the second inner smix loop
+            for (var i = 0; i < N; i++) {                // ROMix - 6
+                var offset = (2 * r - 1) * 16;               // ROMix - 7
+                var j = XY[offset] & (N - 1);
+                blockxor(V, j * Yi, XY, Yi);                 // ROMix - 8 (inner)
+                blockmix_salsa8(XY, Yi, r, x, _X);           // ROMix - 9 (outer)
             }
 
-            // Bootstrap the incremental smix
-            incrementalSMix();
+            arraycopy(XY, 0, B, Bi, Yi);                     // ROMix - 10
+        }
+
+        b = [];
+        for (var i = 0; i < B.length; i++) {
+            b.push((B[i] >>  0) & 0xff);
+            b.push((B[i] >>  8) & 0xff);
+            b.push((B[i] >> 16) & 0xff);
+            b.push((B[i] >> 24) & 0xff);
+        }
+
+        var derivedKey = PBKDF2_HMAC_SHA256_OneIter(password, b, dkLen);
+
+        // Done; don't break (which would reschedule)
+        return derivedKey;
     }
 
     // node.js
@@ -473,6 +386,8 @@ THE SOFTWARE.
         }
 
         root.scrypt = scrypt;
+        root.SHA256 = SHA256;
+        root.PBKDF2 = PBKDF2_HMAC_SHA256_OneIter
     }
 
 })(this);
