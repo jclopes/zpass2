@@ -1,3 +1,5 @@
+This project is DEPRECATED in favor or [zpass3](https://github.com/jclopes/zpass2).
+
 ZPass2
 ======
 [ZPass2 live!](http://zpass2.jclopes.net)
